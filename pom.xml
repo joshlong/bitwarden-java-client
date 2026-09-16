@@ -54,6 +54,16 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<environmentVariables>
+						<!-- lets tests drop a stub `bw` ahead of any real one on the PATH -->
+						<PATH>${project.build.directory}/test-bin:${env.PATH}</PATH>
+					</environmentVariables>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
