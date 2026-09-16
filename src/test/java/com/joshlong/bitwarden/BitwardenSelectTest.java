@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.joshlong.bitwarden;
 
 import com.jayway.jsonpath.InvalidPathException;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * Everything here goes through {@link Bitwarden#itemAsJsonNode(String, String)}, the real
+ * Everything here goes through {@link Bitwarden#select(String, String)}, the real
  * entry point, so the process launch and the JsonPath evaluation are both under test. The
  * cost is the stub {@code bw} below; surefire puts its directory first on the {@code PATH}.
  */
@@ -76,7 +76,7 @@ class BitwardenSelectTest {
     }
 
     private String select(String jsonPath) {
-        return this.bitwarden.itemAsJsonNode(ITEM_ID, jsonPath).toString();
+        return this.bitwarden.select(ITEM_ID, jsonPath).toString();
     }
 
     @Test
@@ -116,56 +116,56 @@ class BitwardenSelectTest {
 
     @Test
     void filterOfOneStillReturnsAnArray() {
-        assertThat(this.bitwarden.itemAsJsonNode(ITEM_ID, "$.fields[?(@.name == 'client-id')].value").isArray())
+        assertThat(this.bitwarden.select(ITEM_ID, "$.fields[?(@.name == 'client-id')].value").isArray())
                 .isTrue();
     }
 
     @Test
     void missingDefinitePathIsAMissingNode() {
-        assertThat(this.bitwarden.itemAsJsonNode(ITEM_ID, "$.nope.nothing").isMissingNode()).isTrue();
+        assertThat(this.bitwarden.select(ITEM_ID, "$.nope.nothing").isMissingNode()).isTrue();
     }
 
     @Test
     void filterThatMatchesNothingIsAnEmptyArray() {
-        assertThat(this.bitwarden.itemAsJsonNode(ITEM_ID, "$.fields[?(@.name == 'nope')].value").isEmpty()).isTrue();
+        assertThat(this.bitwarden.select(ITEM_ID, "$.fields[?(@.name == 'nope')].value").isEmpty()).isTrue();
     }
 
     @Test
     void jqSyntaxIsRejectedRatherThanSilentlyEmpty() {
         assertThatExceptionOfType(InvalidPathException.class)
-                .isThrownBy(() -> this.bitwarden.itemAsJsonNode(ITEM_ID, ".fields[] | select(.name == \"client-id\")"));
+                .isThrownBy(() -> this.bitwarden.select(ITEM_ID, ".fields[] | select(.name == \"client-id\")"));
     }
 
     @Test
     void rootSelectorReturnsTheWholeItemSoJsonPointerStillWorks() {
-        assertThat(this.bitwarden.itemAsJsonNode(ITEM_ID, "$").at("/login/username").asString())
+        assertThat(this.bitwarden.select(ITEM_ID, "$").at("/login/username").asString())
                 .isEqualTo("admin@example.com");
     }
 
     @Test
-    void itemAsStringUnwrapsASingleMatch() {
-        assertThat(this.bitwarden.itemAsString(ITEM_ID, "$.fields[?(@.name == 'client-id')].value"))
+    void selectStringUnwrapsASingleMatch() {
+        assertThat(this.bitwarden.selectString(ITEM_ID, "$.fields[?(@.name == 'client-id')].value"))
                 .isEqualTo("abc123");
     }
 
     @Test
-    void itemAsStringRejectsAMultiValuedMatch() {
+    void selectStringRejectsAMultiValuedMatch() {
         assertThatIllegalStateException()
-                .isThrownBy(() -> this.bitwarden.itemAsString(ITEM_ID, "$..name"))
+                .isThrownBy(() -> this.bitwarden.selectString(ITEM_ID, "$..name"))
                 .withMessageContaining("expected exactly 1");
     }
 
     @Test
-    void itemAsStringRejectsAMatchOfNothing() {
+    void selectStringRejectsAMatchOfNothing() {
         assertThatIllegalStateException()
-                .isThrownBy(() -> this.bitwarden.itemAsString(ITEM_ID, "$.login.nope"))
+                .isThrownBy(() -> this.bitwarden.selectString(ITEM_ID, "$.login.nope"))
                 .withMessageContaining("matched nothing");
     }
 
     @Test
     void anUnknownItemSurfacesTheCliStderr() {
         assertThatIllegalStateException()
-                .isThrownBy(() -> this.bitwarden.itemAsJsonNode("no-such-item", "$"))
+                .isThrownBy(() -> this.bitwarden.select("no-such-item", "$"))
                 .withMessageContaining("Not found.");
     }
 

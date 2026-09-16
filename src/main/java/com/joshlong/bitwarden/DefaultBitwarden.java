@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.joshlong.bitwarden;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -14,18 +14,12 @@ import tools.jackson.databind.node.MissingNode;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.*;
 
 class DefaultBitwarden implements Bitwarden {
 
-    private final Executor executor = Executors.newVirtualThreadPerTaskExecutor() ;
     private final Configuration jsonPath;
     private final ObjectMapper json;
     private final String bwSessionId;
-
-    // one `bw get item` per id, however many expressions get evaluated against it, and
-    // however many threads ask at once: the first caller installs the future, the rest join it
-    private final ConcurrentHashMap<String, CompletableFuture<JsonNode>> items = new ConcurrentHashMap<>();
 
     DefaultBitwarden(String bwSessionId) {
         var jsonMapper = JsonMapper.builder().build();
@@ -54,51 +48,41 @@ class DefaultBitwarden implements Bitwarden {
     }
 
     @Override
-    public JsonNode itemAsJsonNode(String itemId, String jsonPath) {
-        return this.selectFrom(this.item(itemId), jsonPath);
-    }
-
-    /**
-     * The whole item, parsed once and shared. The {@code bw} invocation happens on a
-     * virtual thread so that callers already on one aren't the ones blocking on the pipe.
-     */
-    private JsonNode item(String itemId) {
-        var future = this.items.computeIfAbsent(itemId, //
-                id -> CompletableFuture.supplyAsync(() -> this.json.readTree(this.getItemAsStringUnchecked(id)),
-                        executor));
-        try {
-            return future.join();
-        } //
-        catch (CompletionException e) {
-            // don't let one failed unlock/typo poison the cache for the rest of the JVM
-            this.items.remove(itemId, future);
-            throw e.getCause() instanceof RuntimeException cause ? cause : e;
-        }
+    public JsonNode item(String itemId) {
+        return this.json.readTree(this.getItemAsStringUnchecked(itemId));
     }
 
     @Override
-    public String itemAsString(String itemId, String jsonPath) {
-        var node = this.itemAsJsonNode(itemId, jsonPath);
-        if (node.isArray()) {
-            if (node.size() != 1) {
-                throw new IllegalStateException("`%s` matched %d values in item %s, expected exactly 1"
-                        .formatted(jsonPath, node.size(), itemId));
-            }
-            node = node.get(0);
-        }
-        if (node.isMissingNode() || node.isNull()) {
-            throw new IllegalStateException("`%s` matched nothing in item %s".formatted(jsonPath, itemId));
-        }
-        return node.asString();
-    }
-
-    private JsonNode selectFrom(JsonNode root, String jsonPath) {
-        var match = JsonPath.using(this.jsonPath).parse((Object) root).read(jsonPath);
+    public JsonNode select(JsonNode item, String jsonPath) {
+        var match = JsonPath.using(this.jsonPath).parse((Object) item).read(jsonPath);
         return switch (match) {
             case null -> MissingNode.getInstance();
             case JsonNode node -> node; // Jackson3JsonNodeJsonProvider hands back a tree already
             default -> this.json.valueToTree(match);
         };
+    }
+
+    @Override
+    public String selectString(JsonNode item, String jsonPath) {
+        var node = this.select(item, jsonPath);
+        // filters and wildcards are "indefinite" and always come back as an array,
+        // even when exactly one value matched
+        if (node.isArray()) {
+            if (node.size() != 1) {
+                throw new IllegalStateException("`%s` matched %d values in %s, expected exactly 1"
+                        .formatted(jsonPath, node.size(), describe(item)));
+            }
+            node = node.get(0);
+        }
+        if (node.isMissingNode() || node.isNull()) {
+            throw new IllegalStateException("`%s` matched nothing in %s".formatted(jsonPath, describe(item)));
+        }
+        return node.asString();
+    }
+
+    private static String describe(JsonNode item) {
+        var name = item.path("name");
+        return name.isString() ? "item " + name.asString() : "the item";
     }
 
     private String getItemAsStringUnchecked(String itemId) {
