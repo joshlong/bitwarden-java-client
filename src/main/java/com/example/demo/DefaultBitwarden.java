@@ -14,15 +14,11 @@ import tools.jackson.databind.node.MissingNode;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 
 class DefaultBitwarden implements Bitwarden {
 
-    private static final Executor VIRTUAL_THREADS = runnable -> Thread.ofVirtual().start(runnable);
-
+    private final Executor executor = Executors.newVirtualThreadPerTaskExecutor() ;
     private final Configuration jsonPath;
     private final ObjectMapper json;
     private final String bwSessionId;
@@ -69,7 +65,7 @@ class DefaultBitwarden implements Bitwarden {
     private JsonNode item(String itemId) {
         var future = this.items.computeIfAbsent(itemId, //
                 id -> CompletableFuture.supplyAsync(() -> this.json.readTree(this.getItemAsStringUnchecked(id)),
-                        VIRTUAL_THREADS));
+                        executor));
         try {
             return future.join();
         } //

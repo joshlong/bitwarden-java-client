@@ -2,25 +2,11 @@ package com.example.demo;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 
-/**
- * A Java translation of {@code env.sh}. Nothing touches the filesystem: the shell script
- * spooled each vault item to {@code $HOME/mogul-secrets/...}, forked {@code cat | jq} once
- * per field, then deleted the files at the end. Here {@link Bitwarden} parses each item once
- * in memory and every field comes out of that shared tree.
- * <p>
- * Each {@code contribute*} method below owns exactly one vault item and is independent of
- * the others, so {@link #build()} runs them all concurrently — wall-clock time is one
- * {@code bw} round trip rather than nine in a row. The only ordering constraint is
- * {@link #contributeDerived(Map)}, which reads values the others produce.
- */
 class MogulEnvironment {
 
-    private static final Executor VIRTUAL_THREADS = runnable -> Thread.ofVirtual().start(runnable);
+    private final Executor executor = Executors.newVirtualThreadPerTaskExecutor();
 
     private final Bitwarden bitwarden;
 
@@ -41,7 +27,7 @@ class MogulEnvironment {
                 () -> this.contributeAuth0(env) //
         );
         var futures = contributors.stream() //
-                .map(contributor -> CompletableFuture.runAsync(contributor, VIRTUAL_THREADS)) //
+                .map(contributor -> CompletableFuture.runAsync(contributor, this.executor)) //
                 .toArray(CompletableFuture[]::new);
         try {
             CompletableFuture.allOf(futures).join();
