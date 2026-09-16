@@ -8,24 +8,44 @@
         <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.example</groupId>
-    <artifactId>demo</artifactId>
+    <groupId>com.joshlong</groupId>
+    <artifactId>bitwarden-cli-client</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name/>
-    <description/>
-    <url/>
+    <name>
+        A Bitwarden CLI Wrapper
+    </name>
     <licenses>
-        <license/>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
     </licenses>
+
+
+    <description>
+        Provides a convient autoconfiguration and client to the Bitwarden CLI. Ideal for use in, e.g. JBang
+        shell scripts or other such things.
+    </description>
+    <url>
+        https://github.com/joshlong/bitwarden-java-client/
+    </url>
+
     <developers>
-        <developer/>
+        <developer>
+            <name>Josh Long</name>
+            <email>josh@joshlong.com</email>
+            <organization>joshlong.com</organization>
+            <organizationUrl>https://github.com/joshlong/bitwarden-java-client</organizationUrl>
+        </developer>
     </developers>
     <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
+        <connection>scm:git:git://github.com/joshlong/bitwarden-java-client.git</connection>
+        <developerConnection>scm:git:ssh://github.com/joshlong/bitwarden-java-client.git
+        </developerConnection>
+        <url>https://github.com/joshlong/bitwarden-java-client/tree/main</url>
     </scm>
+
+
     <properties>
         <java.version>25</java.version>
     </properties>
@@ -34,13 +54,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-restclient</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
             <version>3.0.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -50,20 +68,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <environmentVariables>
-                        <!-- lets tests drop a stub `bw` ahead of any real one on the PATH -->
-                        <PATH>${project.build.directory}/test-bin:${env.PATH}</PATH>
-                    </environmentVariables>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>io.spring.javaformat</groupId>
                 <artifactId>spring-javaformat-maven-plugin</artifactId>
@@ -80,5 +84,74 @@
             </plugin>
         </plugins>
     </build>
-
+    <profiles>
+        <profile>
+            <id>publish</id>
+            <properties>
+                <altDeploymentRepository>local::file:./target/staging-deploy</altDeploymentRepository>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.11.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.jreleaser</groupId>
+                        <artifactId>jreleaser-maven-plugin</artifactId>
+                        <version>1.21.0</version>
+                        <configuration>
+                            <jreleaser>
+                                <release>
+                                    <github>
+                                        <branch>main</branch>
+                                    </github>
+                                </release>
+                                <signing>
+                                    <active>ALWAYS</active>
+                                    <armored>true</armored>
+                                    <mode>FILE</mode>
+                                    <publicKey>${user.home}/.jreleaser/public</publicKey>
+                                    <secretKey>${user.home}/.jreleaser/private</secretKey>
+                                </signing>
+                                <deploy>
+                                    <maven>
+                                        <mavenCentral>
+                                            <maven-central>
+                                                <active>ALWAYS</active>
+                                                <url>https://central.sonatype.com/api/v1/publisher</url>
+                                                <stagingRepositories>target/staging-deploy</stagingRepositories>
+                                            </maven-central>
+                                        </mavenCentral>
+                                    </maven>
+                                </deploy>
+                            </jreleaser>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

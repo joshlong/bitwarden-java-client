@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# see! this is why we need this CLI wrapper :D LOL
 export MAVEN_GPG_PASSPHRASE=$( bw get item 'joshlong.com-maven-gpg' |  jq -r '.fields[] | select(.name == "gpg-passphrase") | .value' )  
 
 START_DIR=$(cd `dirname $0` && pwd )
