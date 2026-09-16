@@ -39,7 +39,7 @@ public class DefaultBitwarden implements Bitwarden {
 	 * {@link Configuration} of its own.
 	 * @param bwSessionId the {@code BW_SESSION} token of an unlocked vault
 	 */
-	DefaultBitwarden(String bwSessionId) {
+	public DefaultBitwarden(String bwSessionId) {
 		var jsonMapper = JsonMapper.builder().build();
 		var configuration = jsonPathConfiguration(jsonMapper);
 		this(bwSessionId, jsonMapper, configuration);
@@ -51,7 +51,7 @@ public class DefaultBitwarden implements Bitwarden {
 	 * @param bwSessionId the {@code BW_SESSION} token of an unlocked vault
 	 * @param objectMapper the mapper used to parse {@code bw} output
 	 */
-	DefaultBitwarden(String bwSessionId, JsonMapper objectMapper) {
+	public DefaultBitwarden(String bwSessionId, JsonMapper objectMapper) {
 		this(bwSessionId, objectMapper, jsonPathConfiguration(objectMapper));
 	}
 
@@ -63,7 +63,7 @@ public class DefaultBitwarden implements Bitwarden {
 	 * should carry a Jackson 3 node provider so that matches come back as
 	 * {@link JsonNode}s
 	 */
-	DefaultBitwarden(String bwSessionId, ObjectMapper json, Configuration configuration) {
+	public DefaultBitwarden(String bwSessionId, ObjectMapper json, Configuration configuration) {
 		this.json = json;
 		this.bwSessionId = bwSessionId;
 		this.jsonPath = configuration;
@@ -96,7 +96,7 @@ public class DefaultBitwarden implements Bitwarden {
 		return switch (match) {
 			case null -> MissingNode.getInstance();
 			case JsonNode node -> node; // Jackson3JsonNodeJsonProvider hands back a tree
-										// already
+			// already
 			default -> this.json.valueToTree(match);
 		};
 	}
