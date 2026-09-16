@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.joshlong</groupId>
-    <artifactId>bitwarden-cli-client</artifactId>
+    <artifactId>bitwarden-cli-client-spring-boot-starter</artifactId>
     <version>0.0.4-SNAPSHOT</version>
     <name>
-        A Bitwarden CLI Wrapper
+        A Bitwarden CLI Wrapper Spring Boot Starter
     </name>
     <licenses>
         <license>
