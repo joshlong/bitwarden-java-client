@@ -10,10 +10,11 @@ import org.springframework.context.annotation.Bean;
 @EnableConfigurationProperties(BitwardenProperties.class)
 class BitwardenAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty(name = "bw.session", matchIfMissing = false)
-    DefaultBitwarden defaultBitwarden(BitwardenProperties properties) {
-        return new DefaultBitwarden(properties.session());
-    }
+	@Bean
+	@ConditionalOnMissingBean
+	@ConditionalOnProperty(name = "bw.session", matchIfMissing = false)
+	DefaultBitwarden defaultBitwarden(BitwardenProperties properties) {
+		return new DefaultBitwarden(properties.session());
+	}
+
 }
