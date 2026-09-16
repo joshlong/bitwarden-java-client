@@ -30,8 +30,10 @@ mvn -Ppublish clean deploy
 git commit -am "releasing ${RELEASE_VERSION}" # release the main version
 
 ## RELEASE
-echo "releasing..."
-mvn -Ppublish jreleaser:release -N -pl :easy-spring-batch-remotechunking-spring-boot-starter
+
+ARTIFACT_ID="$( mvn exec:exec -q -Dexec.executable=echo -Dexec.args='${project.artifactId}'  )"
+echo "releasing $ARTIFACT_ID ..."
+mvn -Ppublish jreleaser:release -N -pl :${ARTIFACT_ID}
 
 # clean up the mess we made.
 rm -rf $HOME/.jreleaser/{private,public}
