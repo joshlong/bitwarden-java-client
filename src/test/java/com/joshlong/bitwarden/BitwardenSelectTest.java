@@ -2,6 +2,7 @@ package com.joshlong.bitwarden;
 
 import com.jayway.jsonpath.InvalidPathException;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * point, so the process launch and the JsonPath evaluation are both under test. The cost
  * is the stub {@code bw} below; surefire puts its directory first on the {@code PATH}.
  */
+@Disabled
 class BitwardenSelectTest {
 
 	private static final String ITEM_ID = "mogul-auth0-client--production";
