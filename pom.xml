@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.joshlong</groupId>
     <artifactId>bitwarden-cli-client</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>
         A Bitwarden CLI Wrapper
     </name>
