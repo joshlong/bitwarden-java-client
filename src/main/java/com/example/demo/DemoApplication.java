@@ -61,15 +61,16 @@ class Bitwarden {
             var builder = new ProcessBuilder("bw", "get", "item", itemId, "--raw");
             builder.environment().put("BW_SESSION", bwSessionId);
             var process = builder.start();
-            // drain stderr concurrently so a chatty bw can't fill the pipe and deadlock us
             var stderr = new StringBuilder();
-            var drain = Thread.ofVirtual().start(() -> {
-                try (var err = process.getErrorStream()) {
-                    stderr.append(new String(err.readAllBytes(), StandardCharsets.UTF_8));
-                } catch (IOException ignored) {
-                    // dont care
-                }
-            });
+            var drain = Thread.ofVirtual() //
+                    .start(() -> {
+                        try (var err = process.getErrorStream()) {
+                            stderr.append(new String(err.readAllBytes(), StandardCharsets.UTF_8));
+                        } //
+                        catch (IOException ignored) {
+                            // dont care
+                        }
+                    });
             var stdout = (String) null;
             try (var out = process.getInputStream()) {
                 stdout = new String(out.readAllBytes(), StandardCharsets.UTF_8);
